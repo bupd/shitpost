@@ -51,7 +51,6 @@ func main() {
 		// TEXT HANDLING
 		if msg.Text != "" {
 			go PostViaCrosspost(bot, msg.Chat.ID, "", "", text)
-			// send message
 		}
 
 		// PHOTO HANDLING  (Telegram sends photos as array sorted by size)
@@ -149,7 +148,7 @@ func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, savePath, altText, captio
 	}
 
 	// start command
-	log.Printf("[XPOST] running crosspost for %s", savePath)
+	log.Printf("[XPOST] running crosspost for img: %s, alt: %s, caption: %s", savePath, altText, caption)
 	if err := cmd.Start(); err != nil {
 		log.Println("[XPOST] failed starting:", err)
 		return
