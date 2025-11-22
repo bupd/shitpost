@@ -129,3 +129,57 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string) 
 		log.Println("failed sending message:", err)
 	}
 }
+
+// PostViaCrosspost runs crosspost, captures logs, then sends back the file
+func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, savePath, caption string) {
+	// build command
+	// cmd := exec.Command("crosspost", "-bmtl", "--image", savePath, caption)
+	cmd := exec.Command("crosspost", "-b", "--image", savePath, caption)
+
+	// capture stdout & stderr
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Println("[XPOST] failed to get stdout:", err)
+		return
+	}
+
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		log.Println("[XPOST] failed to get stderr:", err)
+		return
+	}
+
+	// start command
+	log.Printf("[XPOST] running crosspost for %s", savePath)
+	if err := cmd.Start(); err != nil {
+		log.Println("[XPOST] failed starting:", err)
+		return
+	}
+
+	// read output streams
+	outBytes, _ := io.ReadAll(stdout)
+	errBytes, _ := io.ReadAll(stderr)
+
+	// wait until exit
+	if err := cmd.Wait(); err != nil {
+		log.Println("[XPOST] cmd finished with error:", err)
+	}
+
+	// format response caption
+	newCaption := fmt.Sprintf(
+		"%s\n\n=== crosspost logs ===\nstdout:\n%s\n\nstderr:\n%s",
+		caption,
+		string(outBytes),
+		string(errBytes),
+	)
+
+	// send same file back
+	send := tgbot.NewDocument(chatID, tgbot.FilePath(savePath))
+	send.Caption = newCaption
+
+	if _, err := bot.Send(send); err != nil {
+		log.Println("failed sending message:", err)
+	}
+
+	log.Println("[XPOST] file sent back successfully")
+}
