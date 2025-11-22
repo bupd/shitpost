@@ -50,7 +50,8 @@ func main() {
 
 		// TEXT HANDLING
 		if msg.Text != "" {
-			reply := tgbot.NewMessage(msg.Chat.ID, "bot says that "+msg.From.UserName+"said, "+msg.Text)
+			reply := tgbot.NewMessage(msg.Chat.ID, "bot says that "+msg.From.UserName+"said, "+text)
+			go PostViaCrosspost(bot, 0, "", "", text)
 			// send message
 			if _, err := bot.Send(reply); err != nil {
 				log.Println("failed sending message:", err)
@@ -128,8 +129,14 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string) 
 
 // PostViaCrosspost runs crosspost, captures logs, then sends back the file
 func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, savePath, altText, caption string) {
-	// build command
-	cmd := exec.Command("crosspost", "-bmt", "--image", savePath, "--image-alt", altText, caption)
+	var cmd *exec.Cmd
+	if savePath == "" && caption != "" {
+		log.Println("PostViaCrosspost: img not found, sending as text tweet")
+		cmd = exec.Command("crosspost", "-bmt", caption)
+	} else {
+		// build command
+		cmd = exec.Command("crosspost", "-bmt", "--image", savePath, "--image-alt", altText, caption)
+	}
 	// cmd := exec.Command("crosspost", "-b", "--image", savePath, caption)
 
 	// capture stdout & stderr
@@ -169,15 +176,16 @@ func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, savePath, altText, captio
 		string(errBytes),
 	)
 
-	// send same file back
-	send := tgbot.NewDocument(chatID, tgbot.FilePath(savePath))
-	send.Caption = newCaption
-
-	if _, err := bot.Send(send); err != nil {
-		log.Println("failed sending message:", err)
+	if savePath != "" && chatID != 0 {
+		// send same file back
+		send := tgbot.NewDocument(chatID, tgbot.FilePath(savePath))
+		send.Caption = newCaption
+		if _, err := bot.Send(send); err != nil {
+			log.Println("failed sending message:", err)
+		}
+		log.Println("[XPOST] file sent back successfully")
 	}
 
-	log.Println("[XPOST] file sent back successfully")
 }
 
 // ParseCaptionAlt extracts the alt text from a caption.
