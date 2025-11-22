@@ -1,0 +1,9 @@
+services:
+  shitpost-bot:
+    image: bupd/shitpost-engine:latest
+    build: .
+    container_name: shitpost-engine
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - ./downloads:/app/downloads
