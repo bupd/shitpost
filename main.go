@@ -128,7 +128,7 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string) 
 	log.Println("Posting Updates via crosspost")
 	log.Printf("\n run cmd: crosspost -bmtl --image %s --image-alt '%s' '%s'", savePath, altText, cleanCaption)
 
-	go PostViaCrosspost(bot, chatID, savePath, altText, caption)
+	go PostViaCrosspost(bot, chatID, savePath, altText, cleanCaption)
 }
 
 // PostViaCrosspost runs crosspost, captures logs, then sends back the file
