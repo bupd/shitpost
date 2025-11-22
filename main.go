@@ -42,6 +42,15 @@ func main() {
 			continue // <-- changed: skip non-message updates
 		}
 
+		if update.Message.From.UserName != "bupddotxyz" {
+			reply := tgbot.NewMessage(update.Message.From.ID, "Hey "+update.Message.From.UserName+", I'm a bot created by @bupddotxyz. Please ask my lord @bupddotxyz for help. dont message me and waste bandwidth")
+			log.Printf("Intruder: %s", update.Message.From.UserName)
+			if _, err := bot.Send(reply); err != nil {
+				log.Println("failed sending message:", err)
+			}
+			continue
+		}
+
 		msg := update.Message
 		text := msg.Text
 		caption := msg.Caption
