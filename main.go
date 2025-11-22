@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	tgbot "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -42,6 +43,7 @@ func main() {
 
 		msg := update.Message
 		text := msg.Text
+		caption := msg.Caption
 		log.Printf("\nGot message from %s: with message: %s", update.Message.From.UserName, msg)
 		log.Printf("\nGot message text: %s", text)
 
@@ -57,24 +59,23 @@ func main() {
 		// PHOTO HANDLING  (Telegram sends photos as array sorted by size)
 		if len(msg.Photo) > 0 {
 			photo := msg.Photo[len(msg.Photo)-1] // pick highest resolution
-			handleFile(bot, photo.FileID, msg.Chat.ID)
+			handleFile(bot, photo.FileID, msg.Chat.ID, caption)
 		}
 
 		// VIDEO HANDLING
 		if msg.Video != nil {
-			handleFile(bot, msg.Video.FileID, msg.Chat.ID)
+			handleFile(bot, msg.Video.FileID, msg.Chat.ID, caption)
 		}
 
 		// DOCUMENT HANDLING (fallback for files)
 		if msg.Document != nil {
-			handleFile(bot, msg.Document.FileID, msg.Chat.ID)
+			handleFile(bot, msg.Document.FileID, msg.Chat.ID, caption)
 		}
-
 	}
 }
 
 // handleFile downloads + saves + sends back the file
-func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64) {
+func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string) {
 	file, err := bot.GetFile(tgbot.FileConfig{FileID: fileID})
 	if err != nil {
 		log.Println("error getting file:", err)
@@ -118,8 +119,10 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64) {
 
 	// SEND BACK THE SAME FILE
 	send := tgbot.NewDocument(chatID, tgbot.FilePath(savePath))
-	send.Caption = "here’s your file back"
-	// bot.Send(send)
+	send.Caption = caption
+
+	log.Println("Posting Updates via crosspost")
+	log.Printf("\n run cmd: crosspost -bmtl --image %s '%s'", savePath, caption)
 
 	// send message
 	if _, err := bot.Send(send); err != nil {
