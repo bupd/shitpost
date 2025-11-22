@@ -50,12 +50,8 @@ func main() {
 
 		// TEXT HANDLING
 		if msg.Text != "" {
-			reply := tgbot.NewMessage(msg.Chat.ID, "bot says that "+msg.From.UserName+"said, "+text)
-			go PostViaCrosspost(bot, 0, "", "", text)
+			go PostViaCrosspost(bot, msg.Chat.ID, "", "", text)
 			// send message
-			if _, err := bot.Send(reply); err != nil {
-				log.Println("failed sending message:", err)
-			}
 		}
 
 		// PHOTO HANDLING  (Telegram sends photos as array sorted by size)
@@ -176,7 +172,7 @@ func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, savePath, altText, captio
 		string(errBytes),
 	)
 
-	if savePath != "" && chatID != 0 {
+	if savePath != "" {
 		// send same file back
 		send := tgbot.NewDocument(chatID, tgbot.FilePath(savePath))
 		send.Caption = newCaption
@@ -184,6 +180,12 @@ func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, savePath, altText, captio
 			log.Println("failed sending message:", err)
 		}
 		log.Println("[XPOST] file sent back successfully")
+	} else {
+		reply := tgbot.NewMessage(chatID, newCaption)
+		log.Println("[XPOST] no file to send back")
+		if _, err := bot.Send(reply); err != nil {
+			log.Println("failed sending message:", err)
+		}
 	}
 
 }
