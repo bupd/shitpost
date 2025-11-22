@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	tgbot "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	_ "github.com/joho/godotenv/autoload"
@@ -117,10 +118,12 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string) 
 
 	log.Println("saved file:", savePath)
 
-	log.Println("Posting Updates via crosspost")
-	log.Printf("\n run cmd: crosspost -bmtl --image %s '%s'", savePath, caption)
+	cleanCaption, altText := ParseCaptionAlt(caption)
 
-	go PostViaCrosspost(bot, chatID, savePath, caption)
+	log.Println("Posting Updates via crosspost")
+	log.Printf("\n run cmd: crosspost -bmtl --image %s --image-alt '%s' '%s'", savePath, altText, cleanCaption)
+
+	// go PostViaCrosspost(bot, chatID, savePath, altText, caption)
 
 	// send message
 	// if _, err := bot.Send(send); err != nil {
@@ -129,9 +132,9 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string) 
 }
 
 // PostViaCrosspost runs crosspost, captures logs, then sends back the file
-func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, savePath, caption string) {
+func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, savePath, altText, caption string) {
 	// build command
-	cmd := exec.Command("crosspost", "-bmt", "--image", savePath, caption)
+	cmd := exec.Command("crosspost", "-bmt", "--image", savePath, "--image-alt", altText, caption)
 	// cmd := exec.Command("crosspost", "-b", "--image", savePath, caption)
 
 	// capture stdout & stderr
@@ -180,4 +183,26 @@ func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, savePath, caption string)
 	}
 
 	log.Println("[XPOST] file sent back successfully")
+}
+
+// ParseCaptionAlt extracts the alt text from a caption.
+// Format expected: "... text ... \nalt: something here"
+func ParseCaptionAlt(caption string) (cleanCaption, altText string) {
+	// Split by newlines
+	lines := strings.Split(strings.TrimSpace(caption), "\n")
+
+	// last line
+	last := strings.TrimSpace(lines[len(lines)-1])
+
+	// Check if alt exists
+	if strings.HasPrefix(strings.ToLower(last), "alt:") {
+		altText = strings.TrimSpace(strings.TrimPrefix(last, "alt:"))
+
+		// remove last line for clean caption
+		cleanCaption = strings.TrimSpace(strings.Join(lines[:len(lines)-1], "\n"))
+		return cleanCaption, altText
+	}
+
+	// no alt found → return original
+	return caption, ""
 }
