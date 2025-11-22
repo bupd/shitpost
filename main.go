@@ -16,7 +16,7 @@ import (
 
 func main() {
 	// get bot token from env var
-	token := os.Getenv("BOT_TOKEN") // <-- changed: use env variable for safety
+	token := os.Getenv("BOT_TOKEN")
 	if token == "" {
 		log.Fatal("BOT_TOKEN environment variable is required")
 	}
@@ -123,12 +123,7 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string) 
 	log.Println("Posting Updates via crosspost")
 	log.Printf("\n run cmd: crosspost -bmtl --image %s --image-alt '%s' '%s'", savePath, altText, cleanCaption)
 
-	// go PostViaCrosspost(bot, chatID, savePath, altText, caption)
-
-	// send message
-	// if _, err := bot.Send(send); err != nil {
-	// 	log.Println("failed sending message:", err)
-	// }
+	go PostViaCrosspost(bot, chatID, savePath, altText, caption)
 }
 
 // PostViaCrosspost runs crosspost, captures logs, then sends back the file
