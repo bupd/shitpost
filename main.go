@@ -44,7 +44,7 @@ func main() {
 		msg := update.Message
 		text := msg.Text
 		caption := msg.Caption
-		log.Printf("\nGot message from %s: with message: %s", update.Message.From.UserName, msg)
+		log.Printf("\nGot message from %s: with message: %v", update.Message.From.UserName, msg)
 		log.Printf("\nGot message text: %s", text)
 
 		// TEXT HANDLING
@@ -117,24 +117,22 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string) 
 
 	log.Println("saved file:", savePath)
 
-	// SEND BACK THE SAME FILE
-	send := tgbot.NewDocument(chatID, tgbot.FilePath(savePath))
-	send.Caption = caption
-
 	log.Println("Posting Updates via crosspost")
 	log.Printf("\n run cmd: crosspost -bmtl --image %s '%s'", savePath, caption)
 
+	go PostViaCrosspost(bot, chatID, savePath, caption)
+
 	// send message
-	if _, err := bot.Send(send); err != nil {
-		log.Println("failed sending message:", err)
-	}
+	// if _, err := bot.Send(send); err != nil {
+	// 	log.Println("failed sending message:", err)
+	// }
 }
 
 // PostViaCrosspost runs crosspost, captures logs, then sends back the file
 func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, savePath, caption string) {
 	// build command
-	// cmd := exec.Command("crosspost", "-bmtl", "--image", savePath, caption)
-	cmd := exec.Command("crosspost", "-b", "--image", savePath, caption)
+	cmd := exec.Command("crosspost", "-bmt", "--image", savePath, caption)
+	// cmd := exec.Command("crosspost", "-b", "--image", savePath, caption)
 
 	// capture stdout & stderr
 	stdout, err := cmd.StdoutPipe()
