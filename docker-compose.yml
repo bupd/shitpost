@@ -1,6 +1,7 @@
 services:
   shitpost-bot:
     image: registry.goharbor.io/bupd/shitpost:latest
+    build: .
     container_name: shitpost-engine
     env_file: .env
     restart: unless-stopped
