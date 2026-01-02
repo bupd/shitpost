@@ -19,31 +19,74 @@ Simple crossposting bridge that accepts text, photos, videos, and documents via 
 - Podman/Docker & Compose (recommended) or Go 1.25+ to build/run locally.
 - A Telegram bot token (create via @BotFather).
 
-## Quickstart
-1. Clone and enter repo:
+## Docker Images
+
+Pre-built multi-arch images (amd64, arm64) are available:
+
 ```sh
-   git clone https://github.com/bupd/shitpost.git
-   cd shitpost
+# Primary (Harbor)
+docker pull registry.goharbor.io/bupd/shitpost:latest
+
+# Alternative (GitHub Container Registry)
+docker pull ghcr.io/bupd/shitpost:latest
 ```
 
-2. Create `.env` file from template `.env.example` and set `BOT_TOKEN`:
+### Image Tags
+
+| Tag | Description |
+|-----|-------------|
+| `latest` | Most recent build from main branch. May include untested changes. |
+| `v1.0.0` | Specific release version. Stable and tested. Recommended for production. |
+| `v1.0` | Latest patch release in v1.0.x series. |
+| `v1` | Latest minor release in v1.x.x series. |
+
+For production, use a versioned tag (e.g., `v1.0.0`) to avoid unexpected updates.
+
+## Quickstart
+
+### Option 1: Run pre-built image (recommended)
+
+1. Create `.env` file:
+   ```sh
+   curl -o .env https://raw.githubusercontent.com/bupd/shitpost/main/.env.example
+   ```
+   Edit `.env` and set your tokens.
+
+2. Run the container:
+   ```sh
+   docker run -d --name shitpost \
+     --env-file .env \
+     -v ./downloads:/app/downloads \
+     registry.goharbor.io/bupd/shitpost:latest
+   ```
+
+3. Check logs:
+   ```sh
+   docker logs -f shitpost
+   ```
+
+### Option 2: Build from source
+
+1. Clone and enter repo:
+   ```sh
+   git clone https://github.com/bupd/shitpost.git
+   cd shitpost
+   ```
+
+2. Create `.env` file from template and set `BOT_TOKEN`:
    ```sh
    cp .env.example .env
    ```
-   # Edit .env and set:
-   ```
-   BOT_TOKEN=123456:ABC-DEF...
-   ```
 
 3. Build & run with Docker Compose:
-   ```
+   ```sh
    docker compose up --build
    ```
 
 4. Confirm the bot is running by checking logs for:
-   Authorized as @<your_bot_username>
+   `Authorized as @<your_bot_username>`
 
-5. Send messages or media to your bot in Telegram. The bot will post using crosspost and reply with logs / the same file.
+5. Send messages or media to your bot in Telegram. The bot will post using crosspost and reply with logs.
 
 
 ## Environment variables
@@ -119,7 +162,7 @@ Note: When running locally, make sure the `crosspost` CLI is available in your P
 - Add allowlist/denylist for users or groups.
 - Add config options to control whether the posted file is returned.
 - Add graceful shutdown handling.
-- Add tests and CI.
+- Add tests.
 - Improve logging and error reporting.
 
 ## License
