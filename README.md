@@ -1,5 +1,7 @@
 # shitpost
 
+[![CI](https://github.com/bupd/shitpost/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/bupd/shitpost/actions/workflows/ci.yml)
+
 Telegram-powered social media crossposting tool. Post once to Telegram, publish everywhere.
 
 Accept text, photos, videos, and documents via a [Telegram bot](https://t.me/shitpost_engine_bot), then publish them across all your social platforms simultaneously.
