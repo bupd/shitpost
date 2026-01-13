@@ -126,7 +126,7 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string) 
 	cleanCaption, altText := ParseCaptionAlt(caption)
 
 	log.Println("Posting Updates via crosspost")
-	log.Printf("\n run cmd: crosspost -bmtl --image %s --image-alt '%s' '%s'", savePath, altText, cleanCaption)
+	log.Printf("\n run cmd: crosspost -bmt --image %s --image-alt '%s' '%s'", savePath, altText, cleanCaption)
 
 	go PostViaCrosspost(bot, chatID, savePath, altText, cleanCaption)
 }
