@@ -53,6 +53,11 @@ tasks:
     cmds:
       - docker compose logs -f shitpost-bot
 
+  doctor:
+    desc: Check .env configuration without printing secret values
+    cmds:
+      - sh scripts/doctor.sh {{.ENV_FILE}}
+
   dev:
     desc: Run the Telegram crosspost bot locally without Docker
     dotenv: ["{{.ENV_FILE}}"]

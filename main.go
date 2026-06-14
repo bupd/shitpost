@@ -216,6 +216,7 @@ func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, crosspostFlags []string, 
 	}
 
 	cmd := exec.Command("crosspost", args...)
+	cmd.Env = normalizedCrosspostEnv()
 
 	// capture stdout & stderr
 	stdout, err := cmd.StdoutPipe()
@@ -276,6 +277,45 @@ func commandPreview(name string, args []string) string {
 		quoted = append(quoted, strconv.Quote(arg))
 	}
 	return strings.Join(quoted, " ")
+}
+
+func normalizedCrosspostEnv() []string {
+	env := envMap(os.Environ())
+	setDefaultEnv(env, "TWITTER_API_CONSUMER_KEY", "consumer_key", "TWITTER_CONSUMER_KEY")
+	setDefaultEnv(env, "TWITTER_API_CONSUMER_SECRET", "consumer_key_secret", "TWITTER_CONSUMER_SECRET")
+	setDefaultEnv(env, "TWITTER_ACCESS_TOKEN_KEY", "access_token", "access_token_key", "TWITTER_ACCESS_TOKEN")
+	setDefaultEnv(env, "TWITTER_ACCESS_TOKEN_SECRET", "access_token_secret", "TWITTER_ACCESS_SECRET")
+
+	result := make([]string, 0, len(env))
+	for key, value := range env {
+		result = append(result, key+"="+value)
+	}
+
+	return result
+}
+
+func envMap(values []string) map[string]string {
+	env := map[string]string{}
+	for _, value := range values {
+		key, val, ok := strings.Cut(value, "=")
+		if ok {
+			env[key] = val
+		}
+	}
+	return env
+}
+
+func setDefaultEnv(env map[string]string, target string, aliases ...string) {
+	if strings.TrimSpace(env[target]) != "" {
+		return
+	}
+
+	for _, alias := range aliases {
+		if value := strings.TrimSpace(env[alias]); value != "" {
+			env[target] = value
+			return
+		}
+	}
 }
 
 func sendReply(bot *tgbot.BotAPI, chatID int64, text string) {

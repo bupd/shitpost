@@ -179,12 +179,15 @@ task up:dry-run:detached # run dry-run mode in the background
 task up:detached # run in a container in the background
 task logs        # follow container logs
 task down        # stop the container
+task doctor      # check .env shape without printing secret values
 task validate    # gofmt, go vet, go test, go build
 ```
 
 Set `CROSSPOST_FLAGS=-bmt` to post to Bluesky, Mastodon, and X. Set `AUTHORIZED_TELEGRAM_USERS` to your Telegram username or numeric user ID so only you can use the bot.
 
 Use `task up:dry-run` first. Send a Telegram message to the bot and it will reply with the `crosspost` command it would run without posting anything.
+
+Run `task doctor` if a platform fails. It prints which keys are present and their lengths without exposing token values. For X, `shitpost` accepts the canonical `TWITTER_*` names and these aliases before invoking `crosspost`: `consumer_key`, `consumer_key_secret`, `access_token`, and `access_token_secret`.
 
 ## Architecture
 
