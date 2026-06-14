@@ -17,6 +17,8 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
+const telegramMessageLimit = 3900
+
 func main() {
 	token := os.Getenv("BOT_TOKEN")
 	if token == "" {
@@ -239,34 +241,32 @@ func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, crosspostFlags []string, 
 	outBytes, _ := io.ReadAll(stdout)
 	errBytes, _ := io.ReadAll(stderr)
 
+	status := "crosspost completed"
+
 	// wait until exit
 	if err := cmd.Wait(); err != nil {
 		log.Println("[XPOST] cmd finished with error:", err)
+		status = fmt.Sprintf("crosspost failed: %v", err)
 	}
 
-	// format response caption
-	newCaption := fmt.Sprintf(
-		"%s\n\n=== crosspost logs ===\nstdout:\n%s\n\nstderr:\n%s",
+	logMessage := fmt.Sprintf(
+		"%s\n\n%s\n\n=== crosspost logs ===\nstdout:\n%s\n\nstderr:\n%s",
 		caption,
+		status,
 		string(outBytes),
 		string(errBytes),
 	)
 
 	if savePath != "" {
-		// send same file back
 		send := tgbot.NewDocument(chatID, tgbot.FilePath(savePath))
-		send.Caption = newCaption
+		send.Caption = caption
 		if _, err := bot.Send(send); err != nil {
 			log.Println("failed sending message:", err)
 		}
 		log.Println("[XPOST] file sent back successfully")
-	} else {
-		reply := tgbot.NewMessage(chatID, newCaption)
-		log.Println("[XPOST] no file to send back")
-		if _, err := bot.Send(reply); err != nil {
-			log.Println("failed sending message:", err)
-		}
 	}
+
+	sendLongReply(bot, chatID, logMessage)
 
 }
 
@@ -283,6 +283,24 @@ func sendReply(bot *tgbot.BotAPI, chatID int64, text string) {
 	if _, err := bot.Send(reply); err != nil {
 		log.Println("failed sending message:", err)
 	}
+}
+
+func sendLongReply(bot *tgbot.BotAPI, chatID int64, text string) {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return
+	}
+
+	for len(text) > telegramMessageLimit {
+		chunk := text[:telegramMessageLimit]
+		if index := strings.LastIndex(chunk, "\n"); index > 0 {
+			chunk = chunk[:index]
+		}
+		sendReply(bot, chatID, chunk)
+		text = strings.TrimSpace(strings.TrimPrefix(text, chunk))
+	}
+
+	sendReply(bot, chatID, text)
 }
 
 func redactTelegramToken(rawURL string) string {
