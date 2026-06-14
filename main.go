@@ -6,6 +6,7 @@ import (
 	"log"
 	"mime"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -152,7 +153,7 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string, 
 		mediaType = mime.TypeByExtension(filepath.Ext(filename))
 	}
 
-	log.Printf("downloading file: %s, to: %s", url, savePath)
+	log.Printf("downloading file: %s, to: %s", redactTelegramToken(url), savePath)
 
 	// download
 	resp, err := http.Get(url)
@@ -282,6 +283,22 @@ func sendReply(bot *tgbot.BotAPI, chatID int64, text string) {
 	if _, err := bot.Send(reply); err != nil {
 		log.Println("failed sending message:", err)
 	}
+}
+
+func redactTelegramToken(rawURL string) string {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return "<telegram-file-url>"
+	}
+
+	parts := strings.Split(parsed.Path, "/")
+	for i, part := range parts {
+		if strings.HasPrefix(part, "bot") {
+			parts[i] = "bot<redacted>"
+		}
+	}
+	parsed.Path = strings.Join(parts, "/")
+	return parsed.String()
 }
 
 // ParseCaptionAlt extracts the alt text from a caption.

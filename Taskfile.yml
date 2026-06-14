@@ -22,21 +22,25 @@ tasks:
   up:
     desc: Run the Telegram crosspost bot in Docker Compose
     cmds:
+      - mkdir -p downloads
       - docker compose up --build
 
   up:dry-run:
     desc: Run the Telegram crosspost bot in Docker Compose without posting
     cmds:
+      - mkdir -p downloads
       - SHITPOST_DRY_RUN=1 docker compose up --build
 
   up:dry-run:detached:
     desc: Run the Telegram crosspost bot in Docker Compose detached dry-run mode
     cmds:
+      - mkdir -p downloads
       - SHITPOST_DRY_RUN=1 docker compose up --build -d
 
   up:detached:
     desc: Run the Telegram crosspost bot in Docker Compose detached mode
     cmds:
+      - mkdir -p downloads
       - docker compose up --build -d
 
   down:

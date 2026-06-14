@@ -24,8 +24,6 @@ RUN bun install -g @humanwhocodes/crosspost
 
 COPY --from=builder /app/bot /app/bot
 
-RUN mkdir -p /app/downloads && chown -R bun:bun /app
-
-USER bun
+RUN mkdir -p /app/downloads
 
 CMD ["./bot"]
