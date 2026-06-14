@@ -22,6 +22,10 @@ WORKDIR /app
 
 RUN bun install -g @humanwhocodes/crosspost
 
+# Mastodon rejects Bun FormData Blob uploads without a filename as blank files.
+RUN sed -i 's/data.append("file", new Blob(\[image.data\], { type }));/data.append("file", new Blob([image.data], { type }), "image.jpg");/' \
+    /root/.bun/install/global/node_modules/@humanwhocodes/crosspost/dist/strategies/mastodon.js
+
 COPY --from=builder /app/bot /app/bot
 
 RUN mkdir -p /app/downloads
