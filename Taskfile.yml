@@ -24,6 +24,16 @@ tasks:
     cmds:
       - docker compose up --build
 
+  up:dry-run:
+    desc: Run the Telegram crosspost bot in Docker Compose without posting
+    cmds:
+      - SHITPOST_DRY_RUN=1 docker compose up --build
+
+  up:dry-run:detached:
+    desc: Run the Telegram crosspost bot in Docker Compose detached dry-run mode
+    cmds:
+      - SHITPOST_DRY_RUN=1 docker compose up --build -d
+
   up:detached:
     desc: Run the Telegram crosspost bot in Docker Compose detached mode
     cmds:
@@ -45,6 +55,12 @@ tasks:
     cmds:
       - go run ./main.go
 
+  dev:dry-run:
+    desc: Run the Telegram crosspost bot locally without posting
+    dotenv: ["{{.ENV_FILE}}"]
+    cmds:
+      - SHITPOST_DRY_RUN=1 go run ./main.go
+
   build:
     desc: Build the bot binary
     cmds:
@@ -55,15 +71,21 @@ tasks:
     cmds:
       - go test ./...
 
+  lint:
+    desc: Run Go vet
+    cmds:
+      - go vet ./...
+
   fmt:
     desc: Format Go code
     cmds:
       - gofmt -w main.go
 
   validate:
-    desc: Format, test, and build
+    desc: Format, lint, test, and build
     cmds:
       - task: fmt
+      - task: lint
       - task: test
       - task: build
 

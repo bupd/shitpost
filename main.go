@@ -23,6 +23,7 @@ func main() {
 	}
 	authorizedUsers := authorizedTelegramUsers()
 	crosspostFlags := crosspostFlags()
+	dryRun := envBool("SHITPOST_DRY_RUN")
 
 	// initialize bot instance
 	bot, err := tgbot.NewBotAPI(token)
@@ -31,6 +32,9 @@ func main() {
 	}
 
 	log.Printf("Authorized as @%s", bot.Self.UserName)
+	if dryRun {
+		log.Println("Dry-run mode enabled. Messages will not be posted.")
+	}
 
 	// setup update config
 	updateConfig := tgbot.NewUpdate(0)
@@ -62,25 +66,30 @@ func main() {
 
 		// TEXT HANDLING
 		if msg.Text != "" {
-			go PostViaCrosspost(bot, msg.Chat.ID, crosspostFlags, "", "", text)
+			go PostViaCrosspost(bot, msg.Chat.ID, crosspostFlags, "", "", text, dryRun)
 		}
 
 		// PHOTO HANDLING  (Telegram sends photos as array sorted by size)
 		if len(msg.Photo) > 0 {
 			photo := msg.Photo[len(msg.Photo)-1] // pick highest resolution
-			handleFile(bot, photo.FileID, msg.Chat.ID, caption, "image/jpeg", crosspostFlags)
+			handleFile(bot, photo.FileID, msg.Chat.ID, caption, "image/jpeg", crosspostFlags, dryRun)
 		}
 
 		// VIDEO HANDLING
 		if msg.Video != nil {
-			handleFile(bot, msg.Video.FileID, msg.Chat.ID, caption, msg.Video.MimeType, crosspostFlags)
+			handleFile(bot, msg.Video.FileID, msg.Chat.ID, caption, msg.Video.MimeType, crosspostFlags, dryRun)
 		}
 
 		// DOCUMENT HANDLING (fallback for files)
 		if msg.Document != nil {
-			handleFile(bot, msg.Document.FileID, msg.Chat.ID, caption, msg.Document.MimeType, crosspostFlags)
+			handleFile(bot, msg.Document.FileID, msg.Chat.ID, caption, msg.Document.MimeType, crosspostFlags, dryRun)
 		}
 	}
+}
+
+func envBool(name string) bool {
+	value := strings.ToLower(strings.TrimSpace(os.Getenv(name)))
+	return value == "1" || value == "true" || value == "yes"
 }
 
 func authorizedTelegramUsers() map[string]bool {
@@ -123,7 +132,7 @@ func crosspostFlags() []string {
 }
 
 // handleFile downloads + saves + sends back the file
-func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string, mediaType string, crosspostFlags []string) {
+func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string, mediaType string, crosspostFlags []string, dryRun bool) {
 	file, err := bot.GetFile(tgbot.FileConfig{FileID: fileID})
 	if err != nil {
 		log.Println("error getting file:", err)
@@ -174,7 +183,7 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string, 
 		warning := fmt.Sprintf("Downloaded %s, but this bot can only attach image media with the installed crosspost CLI. Posting caption text only.", mediaType)
 		log.Println(warning)
 		if cleanCaption != "" {
-			go PostViaCrosspost(bot, chatID, crosspostFlags, "", "", cleanCaption)
+			go PostViaCrosspost(bot, chatID, crosspostFlags, "", "", cleanCaption, dryRun)
 		} else {
 			sendReply(bot, chatID, warning)
 		}
@@ -183,11 +192,11 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string, 
 
 	log.Println("Posting updates via crosspost")
 
-	go PostViaCrosspost(bot, chatID, crosspostFlags, savePath, altText, cleanCaption)
+	go PostViaCrosspost(bot, chatID, crosspostFlags, savePath, altText, cleanCaption, dryRun)
 }
 
 // PostViaCrosspost runs crosspost, captures logs, then sends back the file
-func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, crosspostFlags []string, savePath, altText, caption string) {
+func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, crosspostFlags []string, savePath, altText, caption string, dryRun bool) {
 	args := append([]string{}, crosspostFlags...)
 	if savePath == "" {
 		log.Println("PostViaCrosspost: img not found, sending as text tweet")
@@ -195,6 +204,14 @@ func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, crosspostFlags []string, 
 		args = append(args, "--image", savePath, "--image-alt", altText)
 	}
 	args = append(args, caption)
+
+	if dryRun {
+		preview := fmt.Sprintf("DRY RUN: would run `%s`", commandPreview("crosspost", args))
+		log.Println(preview)
+		sendReply(bot, chatID, preview)
+		return
+	}
+
 	cmd := exec.Command("crosspost", args...)
 
 	// capture stdout & stderr
@@ -252,6 +269,14 @@ func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, crosspostFlags []string, 
 
 }
 
+func commandPreview(name string, args []string) string {
+	quoted := []string{name}
+	for _, arg := range args {
+		quoted = append(quoted, strconv.Quote(arg))
+	}
+	return strings.Join(quoted, " ")
+}
+
 func sendReply(bot *tgbot.BotAPI, chatID int64, text string) {
 	reply := tgbot.NewMessage(chatID, text)
 	if _, err := bot.Send(reply); err != nil {
@@ -262,8 +287,13 @@ func sendReply(bot *tgbot.BotAPI, chatID int64, text string) {
 // ParseCaptionAlt extracts the alt text from a caption.
 // Format expected: "... text ... \nalt: something here"
 func ParseCaptionAlt(caption string) (cleanCaption, altText string) {
+	caption = strings.TrimSpace(caption)
+	if caption == "" {
+		return "", ""
+	}
+
 	// Split by newlines
-	lines := strings.Split(strings.TrimSpace(caption), "\n")
+	lines := strings.Split(caption, "\n")
 
 	// last line
 	last := strings.TrimSpace(lines[len(lines)-1])

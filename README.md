@@ -174,13 +174,17 @@ alt: Orange and purple sunset over mountains
 ```sh
 task setup       # create .env and download deps
 task up          # run in a container
+task up:dry-run  # run in a container without posting
+task up:dry-run:detached # run dry-run mode in the background
 task up:detached # run in a container in the background
 task logs        # follow container logs
 task down        # stop the container
-task validate    # gofmt, go test, go build
+task validate    # gofmt, go vet, go test, go build
 ```
 
 Set `CROSSPOST_FLAGS=-bmt` to post to Bluesky, Mastodon, and X. Set `AUTHORIZED_TELEGRAM_USERS` to your Telegram username or numeric user ID so only you can use the bot.
+
+Use `task up:dry-run` first. Send a Telegram message to the bot and it will reply with the `crosspost` command it would run without posting anything.
 
 ## Architecture
 

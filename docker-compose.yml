@@ -4,6 +4,8 @@ services:
     build: .
     container_name: shitpost-engine
     env_file: .env
+    environment:
+      SHITPOST_DRY_RUN: ${SHITPOST_DRY_RUN:-}
     restart: unless-stopped
     volumes:
       - ./downloads:/app/downloads
