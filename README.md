@@ -28,9 +28,9 @@ A lightweight, self-hosted alternative to Postiz, Buffer, and Hootsuite for deve
 
 | Platform | Text | Images | Videos |
 |----------|------|--------|--------|
-| Twitter/X | Yes | Yes | Yes |
-| Bluesky | Yes | Yes | Yes |
-| Mastodon | Yes | Yes | Yes |
+| Twitter/X | Yes | Yes | Caption only |
+| Bluesky | Yes | Yes | Caption only |
+| Mastodon | Yes | Yes | Caption only |
 | LinkedIn | Yes | Yes | No |
 | Discord | Yes | Yes | Yes |
 | Telegram | Yes | Yes | Yes |
@@ -147,7 +147,7 @@ crosspost itself may require additional environment variables (API keys, tokens 
 Send any text message to your bot. It will be posted to all configured platforms.
 
 ### Media Posts
-Send images, videos, or documents with an optional caption.
+Send images with an optional caption. Videos and non-image documents are downloaded, but the current `crosspost` CLI path posts their caption text only.
 
 ### Alt Text
 Add alt text for accessibility by ending your caption with `alt:`:
@@ -164,11 +164,23 @@ alt: Orange and purple sunset over mountains
    ```
 
 2. Build and run:
-   ```sh
-   go build -o bot main.go
-   export BOT_TOKEN=your_token_here
-   ./bot
-   ```
+    ```sh
+    task setup
+    task up
+    ```
+
+### Taskfile workflow
+
+```sh
+task setup       # create .env and download deps
+task up          # run in a container
+task up:detached # run in a container in the background
+task logs        # follow container logs
+task down        # stop the container
+task validate    # gofmt, go test, go build
+```
+
+Set `CROSSPOST_FLAGS=-bmt` to post to Bluesky, Mastodon, and X. Set `AUTHORIZED_TELEGRAM_USERS` to your Telegram username or numeric user ID so only you can use the bot.
 
 ## Architecture
 

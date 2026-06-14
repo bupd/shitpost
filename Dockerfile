@@ -16,7 +16,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o bot main.go
 # ----------------------------------------
 # STAGE 2 — RUNTIME WITH BUN & CROSSPOST
 # ----------------------------------------
-FROM oven/bun:alpine
+FROM oven/bun:1.3.10-alpine
 
 WORKDIR /app
 
@@ -24,6 +24,8 @@ RUN bun install -g @humanwhocodes/crosspost
 
 COPY --from=builder /app/bot /app/bot
 
-RUN mkdir -p /app/downloads
+RUN mkdir -p /app/downloads && chown -R bun:bun /app
+
+USER bun
 
 CMD ["./bot"]

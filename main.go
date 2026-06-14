@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	tgbot "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -15,11 +17,12 @@ import (
 )
 
 func main() {
-	// get bot token from env var
 	token := os.Getenv("BOT_TOKEN")
 	if token == "" {
 		log.Fatal("BOT_TOKEN environment variable is required")
 	}
+	authorizedUsers := authorizedTelegramUsers()
+	crosspostFlags := crosspostFlags()
 
 	// initialize bot instance
 	bot, err := tgbot.NewBotAPI(token)
@@ -42,8 +45,8 @@ func main() {
 			continue // <-- changed: skip non-message updates
 		}
 
-		if update.Message.From.UserName != "bupddotxyz" {
-			reply := tgbot.NewMessage(update.Message.From.ID, "Hey "+update.Message.From.UserName+", I'm a bot created by @bupddotxyz. Please ask my lord @bupddotxyz for help. dont message me and waste bandwidth")
+		if !isAuthorized(update.Message.From, authorizedUsers) {
+			reply := tgbot.NewMessage(update.Message.From.ID, "This bot is private.")
 			log.Printf("Intruder: %s", update.Message.From.UserName)
 			if _, err := bot.Send(reply); err != nil {
 				log.Println("failed sending message:", err)
@@ -59,29 +62,68 @@ func main() {
 
 		// TEXT HANDLING
 		if msg.Text != "" {
-			go PostViaCrosspost(bot, msg.Chat.ID, "", "", text)
+			go PostViaCrosspost(bot, msg.Chat.ID, crosspostFlags, "", "", text)
 		}
 
 		// PHOTO HANDLING  (Telegram sends photos as array sorted by size)
 		if len(msg.Photo) > 0 {
 			photo := msg.Photo[len(msg.Photo)-1] // pick highest resolution
-			handleFile(bot, photo.FileID, msg.Chat.ID, caption)
+			handleFile(bot, photo.FileID, msg.Chat.ID, caption, "image/jpeg", crosspostFlags)
 		}
 
 		// VIDEO HANDLING
 		if msg.Video != nil {
-			handleFile(bot, msg.Video.FileID, msg.Chat.ID, caption)
+			handleFile(bot, msg.Video.FileID, msg.Chat.ID, caption, msg.Video.MimeType, crosspostFlags)
 		}
 
 		// DOCUMENT HANDLING (fallback for files)
 		if msg.Document != nil {
-			handleFile(bot, msg.Document.FileID, msg.Chat.ID, caption)
+			handleFile(bot, msg.Document.FileID, msg.Chat.ID, caption, msg.Document.MimeType, crosspostFlags)
 		}
 	}
 }
 
+func authorizedTelegramUsers() map[string]bool {
+	configured := strings.TrimSpace(os.Getenv("AUTHORIZED_TELEGRAM_USERS"))
+	users := map[string]bool{}
+
+	if configured == "" {
+		return users
+	}
+
+	for _, user := range strings.Split(configured, ",") {
+		user = strings.TrimSpace(strings.TrimPrefix(user, "@"))
+		if user != "" {
+			users[strings.ToLower(user)] = true
+		}
+	}
+
+	return users
+}
+
+func isAuthorized(user *tgbot.User, authorizedUsers map[string]bool) bool {
+	if len(authorizedUsers) == 0 {
+		return true
+	}
+
+	if authorizedUsers[strconv.FormatInt(user.ID, 10)] {
+		return true
+	}
+
+	return authorizedUsers[strings.ToLower(user.UserName)]
+}
+
+func crosspostFlags() []string {
+	configured := strings.TrimSpace(os.Getenv("CROSSPOST_FLAGS"))
+	if configured == "" {
+		return []string{"-bmt"}
+	}
+
+	return strings.Fields(configured)
+}
+
 // handleFile downloads + saves + sends back the file
-func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string) {
+func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string, mediaType string, crosspostFlags []string) {
 	file, err := bot.GetFile(tgbot.FileConfig{FileID: fileID})
 	if err != nil {
 		log.Println("error getting file:", err)
@@ -97,6 +139,9 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string) 
 	// determine local save path
 	filename := filepath.Base(file.FilePath)
 	savePath := filepath.Join("downloads", filename)
+	if mediaType == "" {
+		mediaType = mime.TypeByExtension(filepath.Ext(filename))
+	}
 
 	log.Printf("downloading file: %s, to: %s", url, savePath)
 
@@ -125,23 +170,32 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string) 
 
 	cleanCaption, altText := ParseCaptionAlt(caption)
 
-	log.Println("Posting Updates via crosspost")
-	log.Printf("\n run cmd: crosspost -bmt --image %s --image-alt '%s' '%s'", savePath, altText, cleanCaption)
+	if !strings.HasPrefix(mediaType, "image/") {
+		warning := fmt.Sprintf("Downloaded %s, but this bot can only attach image media with the installed crosspost CLI. Posting caption text only.", mediaType)
+		log.Println(warning)
+		if cleanCaption != "" {
+			go PostViaCrosspost(bot, chatID, crosspostFlags, "", "", cleanCaption)
+		} else {
+			sendReply(bot, chatID, warning)
+		}
+		return
+	}
 
-	go PostViaCrosspost(bot, chatID, savePath, altText, cleanCaption)
+	log.Println("Posting updates via crosspost")
+
+	go PostViaCrosspost(bot, chatID, crosspostFlags, savePath, altText, cleanCaption)
 }
 
 // PostViaCrosspost runs crosspost, captures logs, then sends back the file
-func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, savePath, altText, caption string) {
-	var cmd *exec.Cmd
-	if savePath == "" && caption != "" {
+func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, crosspostFlags []string, savePath, altText, caption string) {
+	args := append([]string{}, crosspostFlags...)
+	if savePath == "" {
 		log.Println("PostViaCrosspost: img not found, sending as text tweet")
-		cmd = exec.Command("crosspost", "-bmt", caption)
 	} else {
-		// build command
-		cmd = exec.Command("crosspost", "-bmt", "--image", savePath, "--image-alt", altText, caption)
+		args = append(args, "--image", savePath, "--image-alt", altText)
 	}
-	// cmd := exec.Command("crosspost", "-b", "--image", savePath, caption)
+	args = append(args, caption)
+	cmd := exec.Command("crosspost", args...)
 
 	// capture stdout & stderr
 	stdout, err := cmd.StdoutPipe()
@@ -196,6 +250,13 @@ func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, savePath, altText, captio
 		}
 	}
 
+}
+
+func sendReply(bot *tgbot.BotAPI, chatID int64, text string) {
+	reply := tgbot.NewMessage(chatID, text)
+	if _, err := bot.Send(reply); err != nil {
+		log.Println("failed sending message:", err)
+	}
 }
 
 // ParseCaptionAlt extracts the alt text from a caption.

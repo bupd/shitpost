@@ -1,0 +1,83 @@
+version: "3"
+
+vars:
+  ENV_FILE: '{{default ".env" .ENV_FILE}}'
+  IMAGE: '{{default "registry.goharbor.io/bupd/shitpost" .IMAGE}}'
+  TAG: '{{default "dev" .TAG}}'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  setup:
+    desc: Create .env from .env.example if missing and download Go deps
+    cmds:
+      - cmd: cp .env.example {{.ENV_FILE}}
+        status:
+          - test -f {{.ENV_FILE}}
+      - go mod download
+
+  up:
+    desc: Run the Telegram crosspost bot in Docker Compose
+    cmds:
+      - docker compose up --build
+
+  up:detached:
+    desc: Run the Telegram crosspost bot in Docker Compose detached mode
+    cmds:
+      - docker compose up --build -d
+
+  down:
+    desc: Stop the Docker Compose bot
+    cmds:
+      - docker compose down
+
+  logs:
+    desc: Follow Docker Compose bot logs
+    cmds:
+      - docker compose logs -f shitpost-bot
+
+  dev:
+    desc: Run the Telegram crosspost bot locally without Docker
+    dotenv: ["{{.ENV_FILE}}"]
+    cmds:
+      - go run ./main.go
+
+  build:
+    desc: Build the bot binary
+    cmds:
+      - go build -o bot ./main.go
+
+  test:
+    desc: Run Go tests
+    cmds:
+      - go test ./...
+
+  fmt:
+    desc: Format Go code
+    cmds:
+      - gofmt -w main.go
+
+  validate:
+    desc: Format, test, and build
+    cmds:
+      - task: fmt
+      - task: test
+      - task: build
+
+  image:build:
+    desc: Build the container image
+    cmds:
+      - docker build -t {{.IMAGE}}:{{.TAG}} .
+
+  compose:up:
+    desc: Run the bot in Docker Compose
+    cmds:
+      - task: up
+
+  compose:down:
+    desc: Stop the Docker Compose bot
+    cmds:
+      - task: down
