@@ -57,6 +57,9 @@ printf '\nMastodon\n'
 check_key MASTODON_HOST
 check_key MASTODON_ACCESS_TOKEN
 
+printf '\nLinkedIn\n'
+check_key LINKEDIN_ACCESS_TOKEN
+
 printf '\nTwitter/X\n'
 check_key AUTH_TOKEN
 check_key TWITTER_AUTH_TOKEN

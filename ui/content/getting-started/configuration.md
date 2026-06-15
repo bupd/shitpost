@@ -21,7 +21,7 @@ CROSSPOST_FLAGS=-bmt
 SHITPOST_DRY_RUN=1
 ```
 
-`CROSSPOST_FLAGS=-bmt` tells `crosspost` to post to Bluesky, Mastodon, and Twitter/X. Change it to match the destinations you actually configured.
+`CROSSPOST_FLAGS=-bmt` tells `crosspost` to post to Bluesky, Mastodon, and Twitter/X. `shitpost` handles LinkedIn separately: it strips LinkedIn flags by default and adds `-l` only when the outgoing text or caption contains a hashtag.
 
 ## Core variables
 
@@ -45,6 +45,7 @@ SHITPOST_DRY_RUN=1
 | `MASTODON_ACCESS_TOKEN` | Mastodon | Access token with posting permission. |
 | `MASTODON_CLIENT_KEY` | Mastodon | Optional client key for crosspost flows that need it. |
 | `MASTODON_CLIENT_SECRET` | Mastodon | Optional client secret for crosspost flows that need it. |
+| `LINKEDIN_ACCESS_TOKEN` | LinkedIn | Access token used only when a post contains a hashtag. |
 | `AUTH_TOKEN` | X | Alias for the X `auth_token` cookie. |
 | `TWITTER_AUTH_TOKEN` | X | Explicit X `auth_token`; overrides `AUTH_TOKEN`. |
 | `TWITTER_AUTH_CLIENT` | X | Optional client identity understood by the emusks-backed strategy. |
@@ -85,3 +86,19 @@ CROSSPOST_FLAGS=-bmt
 ```
 
 Send one text message and one image with a caption. If the Telegram replies show the expected command, set `SHITPOST_DRY_RUN=0` and restart the service.
+
+## LinkedIn hashtag gate
+
+LinkedIn posting is deterministic and content-based.
+
+```text
+plain thought for today
+```
+
+The bot posts only to the configured base targets, usually `-bmt`.
+
+```text
+shipping the docs today #golang
+```
+
+The bot posts to the base targets plus LinkedIn by appending `-l`. If `CROSSPOST_FLAGS` contains `-l`, `--linkedin`, or bundled forms such as `-bmtl`, `shitpost` removes LinkedIn first so the hashtag rule is always enforced.

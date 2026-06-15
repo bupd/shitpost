@@ -24,6 +24,7 @@ It is built for people who want the speed of posting from chat without handing t
 - No dashboard, queue, browser tab, or SaaS account required.
 - Text and image posts work from mobile or desktop Telegram.
 - Alt text is supported with a simple `alt:` caption suffix.
+- LinkedIn is gated by hashtags so casual posts stay on Bluesky, Mastodon, and X.
 - Dry-run mode previews the exact `crosspost` command before publishing.
 - Docker images are available for `linux/amd64` and `linux/arm64`.
 
@@ -70,12 +71,14 @@ Authorized as @your_bot_username
 Start in dry-run mode before posting for real:
 
 ```dotenv
-SHITPOST_DRY_RUN=1
-AUTHORIZED_TELEGRAM_USERS=your_telegram_username
 CROSSPOST_FLAGS=-bmt
+AUTHORIZED_TELEGRAM_USERS=your_telegram_username
+SHITPOST_DRY_RUN=1
 ```
 
 Send a Telegram message to the bot. It will reply with the command it would run instead of publishing.
+
+LinkedIn is deterministic: `shitpost` removes `-l` / `--linkedin` from configured flags, then adds `-l` back only when the final post text or caption contains a hashtag such as `#launch`.
 
 ## Documentation
 
@@ -104,6 +107,7 @@ Start there for:
 | `BLUESKY_PASSWORD` | No | Bluesky app password. |
 | `MASTODON_HOST` | No | Mastodon instance URL. |
 | `MASTODON_ACCESS_TOKEN` | No | Mastodon access token. |
+| `LINKEDIN_ACCESS_TOKEN` | No | LinkedIn access token. Used only for posts containing hashtags. |
 
 Run `task doctor` to check which secrets are present without printing their values.
 
@@ -122,6 +126,14 @@ task validate           # gofmt, go vet, go test, go build
 ## Media and alt text
 
 Text messages are posted as text. Photos are downloaded, attached, and posted with their caption.
+
+By default, `CROSSPOST_FLAGS=-bmt` posts to Bluesky, Mastodon, and X. If the outgoing text contains a hashtag, `shitpost` appends LinkedIn automatically:
+
+```text
+shipping the docs today #golang
+```
+
+Without a hashtag, LinkedIn is skipped even if `-l` or `--linkedin` appears in `CROSSPOST_FLAGS`.
 
 Add alt text by ending a caption with a final `alt:` line:
 

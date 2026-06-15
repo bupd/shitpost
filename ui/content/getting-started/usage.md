@@ -62,3 +62,19 @@ CROSSPOST_FLAGS=-bmt
 ```
 
 Use the flags supported by the `crosspost` version you build into the image. The default project configuration targets Bluesky, Mastodon, and Twitter/X.
+
+## LinkedIn hashtag gate
+
+LinkedIn is added only when the outgoing post contains a hashtag.
+
+```text
+short note for the timeline
+```
+
+This posts to the base targets from `CROSSPOST_FLAGS`, usually Bluesky, Mastodon, and X.
+
+```text
+shipping the new docs site #golang
+```
+
+This posts to the base targets and LinkedIn. The rule is enforced even if `CROSSPOST_FLAGS` accidentally includes `-l`, `--linkedin`, or `-bmtl`.

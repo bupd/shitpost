@@ -34,8 +34,9 @@ Telegram user
 5. Text messages call `crosspost` directly with the message body.
 6. Photos are downloaded from Telegram, saved to `downloads/`, and passed to `crosspost` with `--image`.
 7. Captions ending with `alt:` are split into clean caption and image alt text.
-8. Videos and non-image documents are downloaded, but only caption text is posted by the current CLI path.
-9. The bot sends the captured `crosspost` output back to the Telegram chat.
+8. LinkedIn flags are removed from the base target set, then `-l` is added back only when the final post text contains a hashtag.
+9. Videos and non-image documents are downloaded, but only caption text is posted by the current CLI path.
+10. The bot sends the captured `crosspost` output back to the Telegram chat.
 
 ## Docker build flow
 

@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -18,6 +19,8 @@ import (
 )
 
 const telegramMessageLimit = 3900
+
+var hashtagPattern = regexp.MustCompile(`(^|[^\pL\pN_])#[\pL\pN_]+`)
 
 func main() {
 	token := os.Getenv("BOT_TOKEN")
@@ -134,6 +137,36 @@ func crosspostFlags() []string {
 	return strings.Fields(configured)
 }
 
+func flagsForPost(crosspostFlags []string, postText string) []string {
+	flags := withoutLinkedIn(crosspostFlags)
+	if hasHashtag(postText) {
+		flags = append(flags, "-l")
+	}
+	return flags
+}
+
+func withoutLinkedIn(flags []string) []string {
+	result := make([]string, 0, len(flags))
+	for _, flag := range flags {
+		switch {
+		case flag == "--linkedin" || flag == "-l":
+			continue
+		case strings.HasPrefix(flag, "-") && !strings.HasPrefix(flag, "--") && strings.Contains(flag, "l"):
+			trimmed := strings.ReplaceAll(flag, "l", "")
+			if trimmed != "-" {
+				result = append(result, trimmed)
+			}
+		default:
+			result = append(result, flag)
+		}
+	}
+	return result
+}
+
+func hasHashtag(text string) bool {
+	return hashtagPattern.MatchString(text)
+}
+
 // handleFile downloads + saves + sends back the file
 func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string, mediaType string, crosspostFlags []string, dryRun bool) {
 	file, err := bot.GetFile(tgbot.FileConfig{FileID: fileID})
@@ -200,7 +233,7 @@ func handleFile(bot *tgbot.BotAPI, fileID string, chatID int64, caption string, 
 
 // PostViaCrosspost runs crosspost, captures logs, then sends back the file
 func PostViaCrosspost(bot *tgbot.BotAPI, chatID int64, crosspostFlags []string, savePath, altText, caption string, dryRun bool) {
-	args := append([]string{}, crosspostFlags...)
+	args := flagsForPost(crosspostFlags, caption)
 	if savePath == "" {
 		log.Println("PostViaCrosspost: img not found, sending as text tweet")
 	} else {

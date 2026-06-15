@@ -63,6 +63,23 @@ MASTODON_ACCESS_TOKEN=secret-token
 
 Some `crosspost` flows may also use `MASTODON_CLIENT_KEY` and `MASTODON_CLIENT_SECRET`; keep them available if your target command needs them.
 
+## LinkedIn credentials
+
+LinkedIn posts are intentionally gated by hashtags. Configure the credential once, then `shitpost` will add LinkedIn only for posts whose final text or caption contains a hashtag.
+
+1. Go to [LinkedIn Developers](https://www.linkedin.com/developers/).
+2. Create an app and verify the LinkedIn page or member identity you want to post from.
+3. Request access to "Share on LinkedIn" and "Sign in with LinkedIn using OpenID Connect".
+4. Open [OAuth 2.0 Tools](https://www.linkedin.com/developers/tools/oauth) and create a token for your app.
+5. Include the `openid`, `profile`, and `w_member_social` scopes.
+6. Set the access token in `.env`.
+
+```dotenv
+LINKEDIN_ACCESS_TOKEN=linkedin-access-token
+```
+
+LinkedIn tokens can expire. If hashtagged posts start failing while other networks work, create a fresh token and restart the bot.
+
 ## Twitter / X credentials
 
 `shitpost` supports the `crosspost` Twitter strategies and normalizes several legacy aliases before invoking `crosspost`.
