@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="shitpost icon">
+  <rect width="64" height="64" rx="16" fill="#2874e4"/>
+  <path d="M16 19h32v19H29L18 48V38h-2z" fill="#fff"/>
+  <path d="M24 27h17M24 33h11" stroke="#2874e4" stroke-width="4" stroke-linecap="round"/>
+</svg>

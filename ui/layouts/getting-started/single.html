@@ -1,0 +1,12 @@
+{{ define "main" }}
+<div class="docs shell">
+  {{ partial "sidebar.html" . }}
+  <article class="prose">
+    <p class="eyebrow">Documentation</p>
+    <h1>{{ .Title }}</h1>
+    {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+    {{ .Content }}
+    {{ partial "pager.html" . }}
+  </article>
+</div>
+{{ end }}

@@ -1,0 +1,9 @@
+<aside class="sidebar" aria-label="Documentation navigation">
+  <p class="sidebar__title">Getting started</p>
+  <nav>
+    {{ range site.Menus.docs }}
+      {{ $active := eq $.RelPermalink .URL }}
+      <a class="sidebar__link{{ if $active }} sidebar__link--active{{ end }}" href="{{ .URL }}">{{ .Name }}</a>
+    {{ end }}
+  </nav>
+</aside>
