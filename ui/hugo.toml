@@ -1,4 +1,4 @@
-baseURL = "https://shitpost.dev/"
+baseURL = "https://shitpost.bupd.xyz/"
 languageCode = "en-us"
 title = "shitpost"
 disableKinds = ["taxonomy", "term"]

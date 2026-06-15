@@ -1,244 +1,159 @@
 # shitpost
 
-[![CI](https://github.com/bupd/shitpost/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/bupd/shitpost/actions/workflows/ci.yml)
+<p align="center">
+  <img src="ui/static/icon.svg" alt="shitpost" width="96" height="96">
+</p>
 
-Telegram-powered social media crossposting tool. Post once to Telegram, publish everywhere.
+<p align="center">
+  <strong>Post once from Telegram. Publish everywhere.</strong>
+</p>
 
-Accept text, photos, videos, and documents via a [Telegram bot](https://t.me/shitpost_engine_bot), then publish them across all your social platforms simultaneously.
+<p align="center">
+  <a href="https://github.com/bupd/shitpost/actions/workflows/ci.yml"><img src="https://github.com/bupd/shitpost/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://shitpost.bupd.xyz"><img src="https://img.shields.io/badge/docs-shitpost.bupd.xyz-2874e4" alt="Documentation"></a>
+  <a href="https://github.com/bupd/shitpost"><img src="https://img.shields.io/badge/self--hosted-yes-24292f" alt="Self-hosted"></a>
+</p>
 
-A lightweight, self-hosted alternative to Postiz, Buffer, and Hootsuite for developers who want full control over their social media automation.
+`shitpost` is a lightweight, self-hosted Telegram bot for crossposting to your social accounts. Send a message, photo, caption, or alt text to a private Telegram bot and let `crosspost` publish it to the platforms you configured.
 
-## Motivation
+It is built for people who want the speed of posting from chat without handing their tokens, drafts, or media to a hosted scheduler.
 
-- I am fed up with posting and managing different platforms.
-- I have multiple thoughts popping up in my head which I would like to convey to people
-- But I lack the patience to go through multiple different apps just to say something...
-- And to update the content based on the app is more hated.
+## Why use it?
 
-## Features
+- One private Telegram chat becomes your posting interface.
+- No dashboard, queue, browser tab, or SaaS account required.
+- Text and image posts work from mobile or desktop Telegram.
+- Alt text is supported with a simple `alt:` caption suffix.
+- Dry-run mode previews the exact `crosspost` command before publishing.
+- Docker images are available for `linux/amd64` and `linux/arm64`.
 
-- Post to multiple social networks simultaneously from Telegram
-- Supports text, images, videos, and documents
-- Alt-text support for accessible image posts
-- Self-hosted and privacy-focused
-- Multi-arch Docker images (amd64, arm64)
-- Lightweight Go binary with minimal dependencies
+## How it works
 
-## Supported Platforms
+```text
+Telegram -> shitpost bot -> crosspost CLI -> Bluesky / Mastodon / X / more
+```
 
-| Platform | Text | Images | Videos |
-|----------|------|--------|--------|
-| Twitter/X | Yes | Yes | Caption only |
-| Bluesky | Yes | Yes | Caption only |
-| Mastodon | Yes | Yes | Caption only |
-| LinkedIn | Yes | Yes | No |
-| Discord | Yes | Yes | Yes |
-| Telegram | Yes | Yes | Yes |
-| Slack | Yes | Yes | No |
-| Dev.to | Yes | No | No |
-| Nostr | Yes | No | No |
+`shitpost` owns the Telegram side: authorization, message parsing, media downloads, environment normalization, and replies with logs. Publishing is delegated to the `crosspost` CLI.
 
-## Why shitpost?
+## Quick start
 
-| Feature | shitpost | Postiz | Buffer |
-|---------|----------|--------|--------|
-| Self-hosted | Yes | Yes | No |
-| Free | Yes | Freemium | Freemium |
-| Telegram interface | Yes | No | No |
-| No web UI required | Yes | No | No |
-| Privacy-focused | Yes | Partial | No |
-| Open source | Yes | Yes | No |
-
-## Docker Images
-
-Pre-built multi-arch images (amd64, arm64) are available:
+Create an env file:
 
 ```sh
-# Primary (Harbor)
-docker pull registry.goharbor.io/bupd/shitpost:latest
+curl -o .env https://raw.githubusercontent.com/bupd/shitpost/main/.env.example
+```
 
-# Alternative (GitHub Container Registry)
+Edit `.env`, then start the bot:
+
+```sh
+mkdir -p downloads
+docker run -d --name shitpost \
+  --env-file .env \
+  -v ./downloads:/app/downloads \
+  registry.goharbor.io/bupd/shitpost:latest
+```
+
+Watch the logs:
+
+```sh
+docker logs -f shitpost
+```
+
+The bot is ready when logs include:
+
+```text
+Authorized as @your_bot_username
+```
+
+## Recommended first run
+
+Start in dry-run mode before posting for real:
+
+```dotenv
+SHITPOST_DRY_RUN=1
+AUTHORIZED_TELEGRAM_USERS=your_telegram_username
+CROSSPOST_FLAGS=-bmt
+```
+
+Send a Telegram message to the bot. It will reply with the command it would run instead of publishing.
+
+## Documentation
+
+Full setup docs live at [shitpost.bupd.xyz](https://shitpost.bupd.xyz).
+
+Start there for:
+
+- Installation with Docker, Compose, or local Go.
+- Telegram bot creation and private access control.
+- Bluesky, Mastodon, and X credential setup.
+- Every supported environment variable and alias.
+- Architecture, deployment, usage, and troubleshooting.
+
+## Environment variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `BOT_TOKEN` | Yes | Telegram bot token from BotFather. |
+| `AUTHORIZED_TELEGRAM_USERS` | Recommended | Comma-separated Telegram usernames or numeric user IDs allowed to use the bot. |
+| `CROSSPOST_FLAGS` | No | Flags passed to `crosspost`; defaults to `-bmt`. |
+| `SHITPOST_DRY_RUN` | No | Set to `1`, `true`, or `yes` to preview commands without posting. |
+| `AUTH_TOKEN` | No | X `auth_token` cookie value used by the emusks-backed `crosspost` strategy. |
+| `TWITTER_AUTH_TOKEN` | No | Explicit X auth token; overrides `AUTH_TOKEN`. |
+| `BLUESKY_HOST` | No | Bluesky host, usually `bsky.social`. |
+| `BLUESKY_IDENTIFIER` | No | Bluesky handle or email. |
+| `BLUESKY_PASSWORD` | No | Bluesky app password. |
+| `MASTODON_HOST` | No | Mastodon instance URL. |
+| `MASTODON_ACCESS_TOKEN` | No | Mastodon access token. |
+
+Run `task doctor` to check which secrets are present without printing their values.
+
+## Taskfile workflow
+
+```sh
+task setup              # create .env and download Go deps
+task up                 # run in Docker Compose
+task up:dry-run         # run without posting
+task up:detached        # run in the background
+task logs               # follow container logs
+task doctor             # validate .env shape without leaking secrets
+task validate           # gofmt, go vet, go test, go build
+```
+
+## Media and alt text
+
+Text messages are posted as text. Photos are downloaded, attached, and posted with their caption.
+
+Add alt text by ending a caption with a final `alt:` line:
+
+```text
+new deploy view from the homelab
+alt: A terminal window showing a successful Docker deployment
+```
+
+Videos and non-image documents are downloaded, but the current `crosspost` CLI path posts caption text only.
+
+## Images
+
+```sh
+docker pull registry.goharbor.io/bupd/shitpost:latest
 docker pull ghcr.io/bupd/shitpost:latest
 ```
 
-### Image Tags
-
-| Tag | Description |
-|-----|-------------|
-| `latest` | Most recent build from main branch. May include untested changes. |
-| `v1.0.0` | Specific release version. Stable and tested. Recommended for production. |
-| `v1.0` | Latest patch release in v1.0.x series. |
-| `v1` | Latest minor release in v1.x.x series. |
-
-For production, use a versioned tag (e.g., `v1.0.0`) to avoid unexpected updates.
-
-## Quickstart
-
-### Option 1: Run pre-built image (recommended)
-
-1. Create `.env` file:
-   ```sh
-   curl -o .env https://raw.githubusercontent.com/bupd/shitpost/main/.env.example
-   ```
-   Edit `.env` and set your tokens.
-
-2. Run the container:
-   ```sh
-   docker run -d --name shitpost \
-     --env-file .env \
-     -v ./downloads:/app/downloads \
-     registry.goharbor.io/bupd/shitpost:latest
-   ```
-
-3. Check logs:
-   ```sh
-   docker logs -f shitpost
-   ```
-
-### Option 2: Build from source
-
-1. Clone and enter repo:
-   ```sh
-   git clone https://github.com/bupd/shitpost.git
-   cd shitpost
-   ```
-
-2. Create `.env` file from template and set `BOT_TOKEN`:
-   ```sh
-   cp .env.example .env
-   ```
-
-3. Build & run with Docker Compose:
-   ```sh
-   docker compose up --build
-   ```
-
-4. Confirm the bot is running by checking logs for:
-   `Authorized as @<your_bot_username>`
-
-5. Send messages or media to your bot in Telegram. The bot will post using crosspost and reply with logs.
-
-## Requirements
-
-- Docker/Podman (recommended) or Go 1.25+
-- Telegram bot token (create via [@BotFather](https://t.me/BotFather))
-- API keys for target platforms (Twitter, Bluesky, Mastodon, etc.)
-
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `BOT_TOKEN` | Yes | Telegram bot token from BotFather |
-| `AUTH_TOKEN` | No | X `auth_token` cookie value used by the emusks-backed crosspost Twitter strategy |
-| `TWITTER_AUTH_TOKEN` | No | Explicit X `auth_token` cookie value; overrides the `AUTH_TOKEN` alias when set |
-| `TWITTER_API_CONSUMER_KEY` | No | Twitter API consumer key |
-| `TWITTER_API_CONSUMER_SECRET` | No | Twitter API consumer secret |
-| `TWITTER_ACCESS_TOKEN_KEY` | No | Twitter access token |
-| `TWITTER_ACCESS_TOKEN_SECRET` | No | Twitter access token secret |
-| `BLUESKY_HOST` | No | Bluesky host (e.g., bsky.social) |
-| `BLUESKY_IDENTIFIER` | No | Bluesky handle or email |
-| `BLUESKY_PASSWORD` | No | Bluesky app password |
-| `MASTODON_HOST` | No | Mastodon instance URL |
-| `MASTODON_ACCESS_TOKEN` | No | Mastodon access token |
-
-crosspost itself may require additional environment variables (API keys, tokens for target platforms). For details about those envs and how to obtain them, consult the [crosspost documentation](https://github.com/humanwhocodes/crosspost).
-
-## Usage
-
-### Text Posts
-Send any text message to your bot. It will be posted to all configured platforms.
-
-### Media Posts
-Send images with an optional caption. Videos and non-image documents are downloaded, but the current `crosspost` CLI path posts their caption text only.
-
-### Alt Text
-Add alt text for accessibility by ending your caption with `alt:`:
-```
-Check out this sunset!
-alt: Orange and purple sunset over mountains
-```
-
-## Running Locally (without Docker)
-
-1. Install Go 1.25+ and crosspost CLI:
-    ```sh
-    git clone https://github.com/bupd/crosspost.git
-    cd crosspost
-    bun install
-    bun run build
-    bun link
-    ```
-
-2. Build and run:
-    ```sh
-    task setup
-    task up
-    ```
-
-### Taskfile workflow
-
-```sh
-task setup       # create .env and download deps
-task up          # run in a container
-task up:dry-run  # run in a container without posting
-task up:dry-run:detached # run dry-run mode in the background
-task up:detached # run in a container in the background
-task logs        # follow container logs
-task down        # stop the container
-task doctor      # check .env shape without printing secret values
-task validate    # gofmt, go vet, go test, go build
-```
-
-Set `CROSSPOST_FLAGS=-bmt` to post to Bluesky, Mastodon, and X. Set `AUTH_TOKEN` to your X `auth_token` cookie value to use the emusks-backed X poster in `crosspost`. Set `AUTHORIZED_TELEGRAM_USERS` to your Telegram username or numeric user ID so only you can use the bot.
-
-Use `task up:dry-run` first. Send a Telegram message to the bot and it will reply with the `crosspost` command it would run without posting anything.
-
-Run `task doctor` if a platform fails. It prints which keys are present and their lengths without exposing token values. For X, `shitpost` accepts `AUTH_TOKEN` as an alias for `TWITTER_AUTH_TOKEN`, and accepts the legacy official API aliases `consumer_key`, `consumer_key_secret`, `access_token`, and `access_token_secret` before invoking `crosspost`.
-
-## Architecture
-
-```
-Telegram → shitpost bot → crosspost CLI → Social platforms
-```
-
-Built as a lightweight wrapper around [humanwhocodes/crosspost](https://github.com/humanwhocodes/crosspost).
+Use versioned tags for production when available. `latest` tracks the newest build from `main`.
 
 ## Security
 
-- Self-hosted: your data stays on your server
-- No third-party analytics or tracking
-- Media files stored locally (configure volume mounts)
-- Consider implementing allowlists for public-facing bots
+- Set `AUTHORIZED_TELEGRAM_USERS` for any real deployment.
+- Keep `.env` out of Git and backups you do not control.
+- Treat Telegram bot tokens and platform tokens like passwords.
+- Mount `downloads/` somewhere persistent if you want retained media.
 
-## Troubleshooting
+## Related projects
 
-### Bot fails on startup
-- Verify `BOT_TOKEN` is set correctly
-- Check logs: `docker compose logs -f`
-
-### Posts not appearing
-- Verify platform API keys are configured
-- Check crosspost output in bot logs
-
-### Media not uploading
-- Ensure `./downloads` directory exists and is writable
-- Check disk space
-
-## Contributing
-
-Contributions welcome! Please open an issue or PR.
+- [crosspost](https://github.com/humanwhocodes/crosspost) powers the platform publishing.
+- [Postiz](https://github.com/gitroomhq/postiz-app) is a full-featured social media scheduler.
+- [Buffer](https://buffer.com) is a commercial social media management product.
 
 ## License
 
-See [LICENSE](LICENSE) in the repository.
-
-## Related Projects
-
-- [crosspost](https://github.com/humanwhocodes/crosspost) - CLI tool powering the cross-posting
-- [Postiz](https://github.com/gitroomhq/postiz-app) - Full-featured social media scheduler
-- [Buffer](https://buffer.com) - Commercial social media management
-
-## GitHub Topics
-
-Add these topics to your repository for better discoverability:
-`crosspost`, `social-media`, `telegram-bot`, `twitter`, `bluesky`, `mastodon`, `automation`, `self-hosted`, `golang`, `docker`
+See [LICENSE](LICENSE).
