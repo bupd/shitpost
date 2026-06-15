@@ -1,0 +1,17 @@
+{{ $pages := where site.RegularPages "Section" .Section }}
+{{ $pages = sort $pages "Weight" }}
+{{ $current := . }}
+{{ $prev := false }}
+{{ $next := false }}
+{{ range $index, $page := $pages }}
+  {{ if eq $page.RelPermalink $current.RelPermalink }}
+    {{ if gt $index 0 }}{{ $prev = index $pages (sub $index 1) }}{{ end }}
+    {{ if lt (add $index 1) (len $pages) }}{{ $next = index $pages (add $index 1) }}{{ end }}
+  {{ end }}
+{{ end }}
+{{ if or $prev $next }}
+<nav class="pager" aria-label="Page navigation">
+  {{ with $prev }}<a class="pager__item" href="{{ .RelPermalink }}">← {{ .Title }}</a>{{ end }}
+  {{ with $next }}<a class="pager__item pager__item--next" href="{{ .RelPermalink }}">{{ .Title }} →</a>{{ end }}
+</nav>
+{{ end }}

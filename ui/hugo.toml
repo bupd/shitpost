@@ -1,0 +1,70 @@
+baseURL = "https://shitpost.dev/"
+languageCode = "en-us"
+title = "shitpost"
+disableKinds = ["taxonomy", "term"]
+
+[params]
+description = "Telegram-powered social media crossposting for self-hosters."
+repo = "https://github.com/bupd/shitpost"
+image = "registry.goharbor.io/bupd/shitpost:latest"
+
+[markup]
+  [markup.highlight]
+  noClasses = false
+  [markup.goldmark.renderer]
+  unsafe = true
+
+[[menus.main]]
+name = "Home"
+url = "/"
+weight = 10
+
+[[menus.main]]
+name = "Getting started"
+url = "/getting-started/"
+weight = 20
+
+[[menus.main]]
+name = "GitHub"
+url = "https://github.com/bupd/shitpost"
+weight = 30
+
+[[menus.docs]]
+name = "Overview"
+url = "/getting-started/"
+weight = 10
+
+[[menus.docs]]
+name = "Installation"
+url = "/getting-started/installation/"
+weight = 20
+
+[[menus.docs]]
+name = "Authentication"
+url = "/getting-started/authentication/"
+weight = 30
+
+[[menus.docs]]
+name = "Configuration"
+url = "/getting-started/configuration/"
+weight = 40
+
+[[menus.docs]]
+name = "Architecture"
+url = "/getting-started/architecture/"
+weight = 50
+
+[[menus.docs]]
+name = "Usage"
+url = "/getting-started/usage/"
+weight = 60
+
+[[menus.docs]]
+name = "Deployment"
+url = "/getting-started/deployment/"
+weight = 70
+
+[[menus.docs]]
+name = "Troubleshooting"
+url = "/getting-started/troubleshooting/"
+weight = 80

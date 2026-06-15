@@ -1,0 +1,59 @@
+{{ define "main" }}
+<section class="hero">
+  <div class="hero__content shell">
+    <div class="hero__copy">
+      <p class="eyebrow">Telegram-powered crossposting</p>
+      <h1>Post once to Telegram. Publish everywhere.</h1>
+      <p class="hero__lede"><code>shitpost</code> is a tiny self-hosted Go bot that turns your private Telegram chat into a social posting command center.</p>
+      <div class="hero__actions">
+        <a class="button button--primary" href="/getting-started/">Get started</a>
+        <a class="button button--secondary" href="{{ site.Params.repo }}">View on GitHub</a>
+      </div>
+    </div>
+    <div class="terminal" aria-label="Quick start command">
+      <div class="terminal__bar"><span></span><span></span><span></span></div>
+      <pre><code>docker run -d --name shitpost \
+  --env-file .env \
+  -v ./downloads:/app/downloads \
+  {{ site.Params.image }}</code></pre>
+    </div>
+  </div>
+</section>
+
+<section class="feature-grid shell" aria-label="Features">
+  <article class="feature-card">
+    <span class="feature-card__icon">01</span>
+    <h2>Private Telegram interface</h2>
+    <p>Send text, images, captions, and alt text to one bot instead of opening every social app.</p>
+  </article>
+  <article class="feature-card">
+    <span class="feature-card__icon">02</span>
+    <h2>Self-hosted by default</h2>
+    <p>Your tokens, media, and logs stay on your server. No hosted dashboard is required.</p>
+  </article>
+  <article class="feature-card">
+    <span class="feature-card__icon">03</span>
+    <h2>Powered by crosspost</h2>
+    <p>The Go bot handles Telegram. The `crosspost` CLI handles Bluesky, Mastodon, X, and more.</p>
+  </article>
+  <article class="feature-card">
+    <span class="feature-card__icon">04</span>
+    <h2>Dry-run first</h2>
+    <p>Preview the exact command before anything is published. Fix flags and tokens safely.</p>
+  </article>
+</section>
+
+<section class="split shell">
+  <div>
+    <p class="eyebrow">Architecture</p>
+    <h2>A small wrapper, not a platform.</h2>
+    <p><code>shitpost</code> polls Telegram, checks authorization, downloads media, normalizes environment variables, and starts <code>crosspost</code>. That is the whole shape.</p>
+  </div>
+  <div class="flow-card">
+    <span>Telegram</span>
+    <span>shitpost bot</span>
+    <span>crosspost CLI</span>
+    <span>Social platforms</span>
+  </div>
+</section>
+{{ end }}
