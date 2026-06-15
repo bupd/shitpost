@@ -1,0 +1,6 @@
+.env
+.git
+bot
+downloads
+*.test
+*.out

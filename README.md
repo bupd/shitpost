@@ -28,9 +28,9 @@ A lightweight, self-hosted alternative to Postiz, Buffer, and Hootsuite for deve
 
 | Platform | Text | Images | Videos |
 |----------|------|--------|--------|
-| Twitter/X | Yes | Yes | Yes |
-| Bluesky | Yes | Yes | Yes |
-| Mastodon | Yes | Yes | Yes |
+| Twitter/X | Yes | Yes | Caption only |
+| Bluesky | Yes | Yes | Caption only |
+| Mastodon | Yes | Yes | Caption only |
 | LinkedIn | Yes | Yes | No |
 | Discord | Yes | Yes | Yes |
 | Telegram | Yes | Yes | Yes |
@@ -129,6 +129,8 @@ For production, use a versioned tag (e.g., `v1.0.0`) to avoid unexpected updates
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `BOT_TOKEN` | Yes | Telegram bot token from BotFather |
+| `AUTH_TOKEN` | No | X `auth_token` cookie value used by the emusks-backed crosspost Twitter strategy |
+| `TWITTER_AUTH_TOKEN` | No | Explicit X `auth_token` cookie value; overrides the `AUTH_TOKEN` alias when set |
 | `TWITTER_API_CONSUMER_KEY` | No | Twitter API consumer key |
 | `TWITTER_API_CONSUMER_SECRET` | No | Twitter API consumer secret |
 | `TWITTER_ACCESS_TOKEN_KEY` | No | Twitter access token |
@@ -147,7 +149,7 @@ crosspost itself may require additional environment variables (API keys, tokens 
 Send any text message to your bot. It will be posted to all configured platforms.
 
 ### Media Posts
-Send images, videos, or documents with an optional caption.
+Send images with an optional caption. Videos and non-image documents are downloaded, but the current `crosspost` CLI path posts their caption text only.
 
 ### Alt Text
 Add alt text for accessibility by ending your caption with `alt:`:
@@ -159,16 +161,39 @@ alt: Orange and purple sunset over mountains
 ## Running Locally (without Docker)
 
 1. Install Go 1.25+ and crosspost CLI:
-   ```sh
-   npm install -g @humanwhocodes/crosspost
-   ```
+    ```sh
+    git clone https://github.com/bupd/crosspost.git
+    cd crosspost
+    bun install
+    bun run build
+    bun link
+    ```
 
 2. Build and run:
-   ```sh
-   go build -o bot main.go
-   export BOT_TOKEN=your_token_here
-   ./bot
-   ```
+    ```sh
+    task setup
+    task up
+    ```
+
+### Taskfile workflow
+
+```sh
+task setup       # create .env and download deps
+task up          # run in a container
+task up:dry-run  # run in a container without posting
+task up:dry-run:detached # run dry-run mode in the background
+task up:detached # run in a container in the background
+task logs        # follow container logs
+task down        # stop the container
+task doctor      # check .env shape without printing secret values
+task validate    # gofmt, go vet, go test, go build
+```
+
+Set `CROSSPOST_FLAGS=-bmt` to post to Bluesky, Mastodon, and X. Set `AUTH_TOKEN` to your X `auth_token` cookie value to use the emusks-backed X poster in `crosspost`. Set `AUTHORIZED_TELEGRAM_USERS` to your Telegram username or numeric user ID so only you can use the bot.
+
+Use `task up:dry-run` first. Send a Telegram message to the bot and it will reply with the `crosspost` command it would run without posting anything.
+
+Run `task doctor` if a platform fails. It prints which keys are present and their lengths without exposing token values. For X, `shitpost` accepts `AUTH_TOKEN` as an alias for `TWITTER_AUTH_TOKEN`, and accepts the legacy official API aliases `consumer_key`, `consumer_key_secret`, `access_token`, and `access_token_secret` before invoking `crosspost`.
 
 ## Architecture
 

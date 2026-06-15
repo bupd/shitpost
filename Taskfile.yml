@@ -1,0 +1,116 @@
+version: "3"
+
+vars:
+  ENV_FILE: '{{default ".env" .ENV_FILE}}'
+  IMAGE: '{{default "registry.goharbor.io/bupd/shitpost" .IMAGE}}'
+  TAG: '{{default "dev" .TAG}}'
+  CROSSPOST_REPO: '{{default "https://github.com/bupd/crosspost.git" .CROSSPOST_REPO}}'
+  CROSSPOST_REF: '{{default "main" .CROSSPOST_REF}}'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  setup:
+    desc: Create .env from .env.example if missing and download Go deps
+    cmds:
+      - cmd: cp .env.example {{.ENV_FILE}}
+        status:
+          - test -f {{.ENV_FILE}}
+      - go mod download
+
+  up:
+    desc: Run the Telegram crosspost bot in Docker Compose
+    cmds:
+      - mkdir -p downloads
+      - docker compose up --build
+
+  up:dry-run:
+    desc: Run the Telegram crosspost bot in Docker Compose without posting
+    cmds:
+      - mkdir -p downloads
+      - SHITPOST_DRY_RUN=1 docker compose up --build
+
+  up:dry-run:detached:
+    desc: Run the Telegram crosspost bot in Docker Compose detached dry-run mode
+    cmds:
+      - mkdir -p downloads
+      - SHITPOST_DRY_RUN=1 docker compose up --build -d
+
+  up:detached:
+    desc: Run the Telegram crosspost bot in Docker Compose detached mode
+    cmds:
+      - mkdir -p downloads
+      - docker compose up --build -d
+
+  down:
+    desc: Stop the Docker Compose bot
+    cmds:
+      - docker compose down
+
+  logs:
+    desc: Follow Docker Compose bot logs
+    cmds:
+      - docker compose logs -f shitpost-bot
+
+  doctor:
+    desc: Check .env configuration without printing secret values
+    cmds:
+      - sh scripts/doctor.sh {{.ENV_FILE}}
+
+  dev:
+    desc: Run the Telegram crosspost bot locally without Docker
+    dotenv: ["{{.ENV_FILE}}"]
+    cmds:
+      - go run ./main.go
+
+  dev:dry-run:
+    desc: Run the Telegram crosspost bot locally without posting
+    dotenv: ["{{.ENV_FILE}}"]
+    cmds:
+      - SHITPOST_DRY_RUN=1 go run ./main.go
+
+  build:
+    desc: Build the bot binary
+    cmds:
+      - go build -o bot ./main.go
+
+  test:
+    desc: Run Go tests
+    cmds:
+      - go test ./...
+
+  lint:
+    desc: Run Go vet
+    cmds:
+      - go vet ./...
+
+  fmt:
+    desc: Format Go code
+    cmds:
+      - gofmt -w main.go
+
+  validate:
+    desc: Format, lint, test, and build
+    cmds:
+      - task: fmt
+      - task: lint
+      - task: test
+      - task: build
+
+  image:build:
+    desc: Build the container image
+    cmds:
+      - docker build --build-arg CROSSPOST_REPO={{.CROSSPOST_REPO}} --build-arg CROSSPOST_REF={{.CROSSPOST_REF}} -t {{.IMAGE}}:{{.TAG}} .
+
+  compose:up:
+    desc: Run the bot in Docker Compose
+    cmds:
+      - task: up
+
+  compose:down:
+    desc: Stop the Docker Compose bot
+    cmds:
+      - task: down
