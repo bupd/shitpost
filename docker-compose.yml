@@ -1,7 +1,11 @@
 services:
   shitpost-bot:
     image: registry.goharbor.io/bupd/shitpost:latest
-    build: .
+    build:
+      context: .
+      args:
+        CROSSPOST_REPO: ${CROSSPOST_REPO:-https://github.com/bupd/crosspost.git}
+        CROSSPOST_REF: ${CROSSPOST_REF:-main}
     container_name: shitpost-engine
     env_file: .env
     environment:

@@ -129,6 +129,8 @@ For production, use a versioned tag (e.g., `v1.0.0`) to avoid unexpected updates
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `BOT_TOKEN` | Yes | Telegram bot token from BotFather |
+| `AUTH_TOKEN` | No | X `auth_token` cookie value used by the emusks-backed crosspost Twitter strategy |
+| `TWITTER_AUTH_TOKEN` | No | Explicit X `auth_token` cookie value; overrides the `AUTH_TOKEN` alias when set |
 | `TWITTER_API_CONSUMER_KEY` | No | Twitter API consumer key |
 | `TWITTER_API_CONSUMER_SECRET` | No | Twitter API consumer secret |
 | `TWITTER_ACCESS_TOKEN_KEY` | No | Twitter access token |
@@ -159,9 +161,13 @@ alt: Orange and purple sunset over mountains
 ## Running Locally (without Docker)
 
 1. Install Go 1.25+ and crosspost CLI:
-   ```sh
-   npm install -g @humanwhocodes/crosspost
-   ```
+    ```sh
+    git clone https://github.com/bupd/crosspost.git
+    cd crosspost
+    bun install
+    bun run build
+    bun link
+    ```
 
 2. Build and run:
     ```sh
@@ -183,11 +189,11 @@ task doctor      # check .env shape without printing secret values
 task validate    # gofmt, go vet, go test, go build
 ```
 
-Set `CROSSPOST_FLAGS=-bmt` to post to Bluesky, Mastodon, and X. Set `AUTHORIZED_TELEGRAM_USERS` to your Telegram username or numeric user ID so only you can use the bot.
+Set `CROSSPOST_FLAGS=-bmt` to post to Bluesky, Mastodon, and X. Set `AUTH_TOKEN` to your X `auth_token` cookie value to use the emusks-backed X poster in `crosspost`. Set `AUTHORIZED_TELEGRAM_USERS` to your Telegram username or numeric user ID so only you can use the bot.
 
 Use `task up:dry-run` first. Send a Telegram message to the bot and it will reply with the `crosspost` command it would run without posting anything.
 
-Run `task doctor` if a platform fails. It prints which keys are present and their lengths without exposing token values. For X, `shitpost` accepts the canonical `TWITTER_*` names and these aliases before invoking `crosspost`: `consumer_key`, `consumer_key_secret`, `access_token`, and `access_token_secret`.
+Run `task doctor` if a platform fails. It prints which keys are present and their lengths without exposing token values. For X, `shitpost` accepts `AUTH_TOKEN` as an alias for `TWITTER_AUTH_TOKEN`, and accepts the legacy official API aliases `consumer_key`, `consumer_key_secret`, `access_token`, and `access_token_secret` before invoking `crosspost`.
 
 ## Architecture
 

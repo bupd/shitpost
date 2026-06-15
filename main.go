@@ -281,6 +281,7 @@ func commandPreview(name string, args []string) string {
 
 func normalizedCrosspostEnv() []string {
 	env := envMap(os.Environ())
+	setDefaultEnv(env, "TWITTER_AUTH_TOKEN", "AUTH_TOKEN")
 	setDefaultEnv(env, "TWITTER_API_CONSUMER_KEY", "consumer_key", "TWITTER_CONSUMER_KEY")
 	setDefaultEnv(env, "TWITTER_API_CONSUMER_SECRET", "consumer_key_secret", "TWITTER_CONSUMER_SECRET")
 	setDefaultEnv(env, "TWITTER_ACCESS_TOKEN_KEY", "access_token", "access_token_key", "TWITTER_ACCESS_TOKEN")

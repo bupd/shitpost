@@ -4,6 +4,8 @@ vars:
   ENV_FILE: '{{default ".env" .ENV_FILE}}'
   IMAGE: '{{default "registry.goharbor.io/bupd/shitpost" .IMAGE}}'
   TAG: '{{default "dev" .TAG}}'
+  CROSSPOST_REPO: '{{default "https://github.com/bupd/crosspost.git" .CROSSPOST_REPO}}'
+  CROSSPOST_REF: '{{default "main" .CROSSPOST_REF}}'
 
 tasks:
   default:
@@ -101,7 +103,7 @@ tasks:
   image:build:
     desc: Build the container image
     cmds:
-      - docker build -t {{.IMAGE}}:{{.TAG}} .
+      - docker build --build-arg CROSSPOST_REPO={{.CROSSPOST_REPO}} --build-arg CROSSPOST_REF={{.CROSSPOST_REF}} -t {{.IMAGE}}:{{.TAG}} .
 
   compose:up:
     desc: Run the bot in Docker Compose
