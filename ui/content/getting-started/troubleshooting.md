@@ -76,5 +76,5 @@ docker rm -f shitpost
 docker run -d --name shitpost \
   --env-file .env \
   -v ./downloads:/app/downloads \
-  registry.goharbor.io/bupd/shitpost:latest
+  ghcr.io/bupd/shitpost:latest
 ```

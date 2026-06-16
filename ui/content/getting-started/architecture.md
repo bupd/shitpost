@@ -48,9 +48,9 @@ The final container starts `./bot` from `/app` and stores downloaded media in `/
 
 ## CI and releases
 
-Pull requests and pushes run formatting, vet, build, and tests. Pushes to `main` also build multi-arch images for `linux/amd64` and `linux/arm64`, sign them, publish to GHCR, and copy `latest` to Harbor.
+Pull requests run `task ci` inside a Go container to check formatting, vet, tests, and builds.
 
-Tags beginning with `v` run GoReleaser, publish release archives, build semver image tags, copy them to Harbor, and sign the images.
+Tags beginning with `v` run GoReleaser, publish release archives, build GHCR semver image tags, sign the GHCR image, and attach provenance.
 
 ## Security model
 

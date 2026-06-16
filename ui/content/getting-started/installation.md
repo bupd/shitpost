@@ -26,7 +26,7 @@ Edit `.env`, then run:
 docker run -d --name shitpost \
   --env-file .env \
   -v ./downloads:/app/downloads \
-  registry.goharbor.io/bupd/shitpost:latest
+  ghcr.io/bupd/shitpost:latest
 ```
 
 Follow logs:

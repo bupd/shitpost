@@ -21,7 +21,7 @@ docker run -d --name shitpost \
   --restart unless-stopped \
   --env-file /opt/shitpost/.env \
   -v /opt/shitpost/downloads:/app/downloads \
-  registry.goharbor.io/bupd/shitpost:latest
+  ghcr.io/bupd/shitpost:latest
 ```
 
 Check logs:
@@ -47,7 +47,6 @@ The Compose service is named `shitpost-bot` and the container is named `shitpost
 Published images are available from:
 
 ```sh
-docker pull registry.goharbor.io/bupd/shitpost:latest
 docker pull ghcr.io/bupd/shitpost:latest
 ```
 

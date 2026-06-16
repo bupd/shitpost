@@ -1,6 +1,6 @@
 services:
   shitpost-bot:
-    image: registry.goharbor.io/bupd/shitpost:latest
+    image: ghcr.io/bupd/shitpost:latest
     build:
       context: .
       args:

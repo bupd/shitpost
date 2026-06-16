@@ -2,7 +2,7 @@ version: "3"
 
 vars:
   ENV_FILE: '{{default ".env" .ENV_FILE}}'
-  IMAGE: '{{default "registry.goharbor.io/bupd/shitpost" .IMAGE}}'
+  IMAGE: '{{default "ghcr.io/bupd/shitpost" .IMAGE}}'
   TAG: '{{default "dev" .TAG}}'
   CROSSPOST_REPO: '{{default "https://github.com/bupd/crosspost.git" .CROSSPOST_REPO}}'
   CROSSPOST_REF: '{{default "main" .CROSSPOST_REF}}'
@@ -91,6 +91,19 @@ tasks:
     desc: Format Go code
     cmds:
       - gofmt -w main.go
+
+  fmt:check:
+    desc: Check Go formatting
+    cmds:
+      - test -z "$(gofmt -l .)"
+
+  ci:
+    desc: Run CI checks without modifying files
+    cmds:
+      - task: fmt:check
+      - task: lint
+      - task: test
+      - task: build
 
   validate:
     desc: Format, lint, test, and build
