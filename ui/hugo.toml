@@ -6,7 +6,7 @@ disableKinds = ["taxonomy", "term"]
 [params]
 description = "Telegram-powered social media crossposting for self-hosters."
 repo = "https://github.com/bupd/shitpost"
-image = "registry.goharbor.io/bupd/shitpost:latest"
+image = "ghcr.io/bupd/shitpost:latest"
 
 [markup]
   [markup.highlight]

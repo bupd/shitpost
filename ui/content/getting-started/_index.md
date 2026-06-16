@@ -20,7 +20,7 @@ curl -o .env https://raw.githubusercontent.com/bupd/shitpost/main/.env.example
 docker run -d --name shitpost \
   --env-file .env \
   -v ./downloads:/app/downloads \
-  registry.goharbor.io/bupd/shitpost:latest
+  ghcr.io/bupd/shitpost:latest
 ```
 
 ## What it does

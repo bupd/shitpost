@@ -21,7 +21,7 @@ A lightweight, self-hosted alternative to Postiz, Buffer, and Hootsuite for deve
 - Supports text, images, videos, and documents
 - Alt-text support for accessible image posts
 - Self-hosted and privacy-focused
-- Multi-arch Docker images (amd64, arm64)
+- Multi-arch GHCR Docker images (amd64, arm64)
 - Lightweight Go binary with minimal dependencies
 
 ## Supported Platforms
@@ -54,10 +54,6 @@ A lightweight, self-hosted alternative to Postiz, Buffer, and Hootsuite for deve
 Pre-built multi-arch images (amd64, arm64) are available:
 
 ```sh
-# Primary (Harbor)
-docker pull registry.goharbor.io/bupd/shitpost:latest
-
-# Alternative (GitHub Container Registry)
 docker pull ghcr.io/bupd/shitpost:latest
 ```
 
@@ -87,7 +83,7 @@ For production, use a versioned tag (e.g., `v1.0.0`) to avoid unexpected updates
    docker run -d --name shitpost \
      --env-file .env \
      -v ./downloads:/app/downloads \
-     registry.goharbor.io/bupd/shitpost:latest
+     ghcr.io/bupd/shitpost:latest
    ```
 
 3. Check logs:
@@ -209,6 +205,8 @@ Built as a lightweight wrapper around [humanwhocodes/crosspost](https://github.c
 - No third-party analytics or tracking
 - Media files stored locally (configure volume mounts)
 - Consider implementing allowlists for public-facing bots
+- See [docs/release-security-plan.md](docs/release-security-plan.md) for the OWASP-based release hardening plan.
+- See [docs/slsa.md](docs/slsa.md) for the release provenance target and verification commands.
 
 ## Troubleshooting
 
